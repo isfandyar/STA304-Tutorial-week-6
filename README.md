@@ -19,14 +19,14 @@ And finally, for the map, please reflect on the following quote from Heather Kra
 
 In this repository you will find the following:
 
-1. Inputs
+1. Inputs:
 In this folder, you will find raw data from Open Portal Toronto, as well as cleaned datasets.
 
-2. Outputs
+2. Outputs:
 In this folder you will find a reference file, RMarkdown file, and a pdf document of the paper.
 
-3. Scripts
+3. Scripts:
 This folder contains R-Scripts to retrieve, clean, and do analysis with the dataset.
 
-4. Licence
+4. Licence:
 Typical MIT licence for re usability
