@@ -1,0 +1,133 @@
+---
+title: "Tutorial - Week 6"
+subtitle: " "
+author: Isfandyar Virani
+thanks: "Code and data are available at: https://github.com/isfandyar/STA304-Tutorial-week-6 "
+date: "`r format(Sys.time(), '%d %B %Y')`"
+abstract: "	"
+output:
+  bookdown::pdf_document2
+toc: FALSE
+bibliography: references.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(opendatatoronto)
+library(tidyverse)
+library(dplyr)
+library(readr)
+library(ggplot2)
+library(knitr)
+library(vtable)
+library(ggmap)
+```
+
+# Task
+
+Using R Markdown, please create a graph using ggplot2 [@citeggplot2] and a map using ggmap [@citeggmap] and add explanatory text to accompany both. Be sure to include cross-references and captions, etc. This should take one to two pages for each of them.
+
+Then, for the graph, please reflect on [@Vanderplas2020] and add a few paragraphs about the different options that you considered that the graph more effective. (If you’ve not now got at least two pages about your graph you’ve likely written too little.)
+
+And finally, for the map, please reflect on the following quote from Heather Krause: ‘maps only show people who aren’t invisible to the makers’ as well as Chapter 3 from [@2020] and add a few paragraphs related to this. (Again, if you’ve not now got at least two pages about your map you’ve likely written too little.)
+
+
+```{r, include = FALSE, message=FALSE}
+
+#### Import data from folder ####
+raw_data <- read_csv("/home/viraniis/Tutorial/Tutorial week 6/CopyOfstarter_folder/inputs/data/raw_data.csv")
+
+
+##### Extracting Event Call type and Location (Lattitute and Longitude)
+EventCallType <- raw_data %>% select( Initial.CAD.Event.Call.Type,LONGITUDE, LATITUDE)
+
+unique(EventCallType$Initial.CAD.Event.Call.Type) # Looking at the 8 different types of calls
+
+### Finding the count of each of the 8 types of emergency event and arranging them in decending order
+EventCallTypeCount<- EventCallType %>% group_by(Initial.CAD.Event.Call.Type) %>% summarize(count=n()) %>% arrange(desc(count))
+
+
+
+### Getting emergency event count without the missing values
+EventCallType_reduced <- filter(EventCallType, LATITUDE != 0) %>% filter(LONGITUDE != 0)  
+
+## https://boundingbox.klokantech.com/ <--- used this website to get the bounding box
+bbox_toronto <- c(left = -79.629471, bottom = 43.585106, right = -79.121844, top = 43.853512)
+
+## Toronto Stamen map
+toronto_stamen_map <- get_stamenmap(bbox_toronto, zoom = 11, maptype = "toner-lite")
+```
+
+
+# Data
+
+To look at Toronto's Fire Services emergency incident's, I utilized the Fire Services Emergency Incident Basic Detail dataset [@citetorontofireservices] from the Toronto Open Data portal [@citeopendatatoronto] using R statistical computing software [@citeR]. For this tutorial, I am only using the columns `Initial.CAD.Event.Call.Type`, `LONGITUDE` , and `LATITUDE` from the raw data. Using these columns, I constructed (Figure \@ref(fig:fig1)) & (Figure \@ref(fig:fig2)) using `ggplot` [@citeggplot2] & `ggmap` [@citeggmap].
+
+
+## Graph
+
+```{r fig1, echo=FALSE, fig.cap='Toronto Fire Services Emergency Incident Calls Type Count)', fig.width=10, fig.height=5, message=FALSE}
+EventCallTypeCount %>% ggplot(aes(x = reorder(Initial.CAD.Event.Call.Type, count), y = count)) + geom_bar(stat = 'identity', position = position_dodge()) + coord_flip() + 
+  labs(x = 'Emergency Type', y = 'Count', title = 'Toronto Fire Services Emergency Incident Calls Type') +
+  theme(axis.text.x =  element_text(angle = 27))
+
+```
+
+The graph (Figure \@ref(fig:fig1)) was created using ggplot2 library. The graph (Figure \@ref(fig:fig1)) shows the Toronto Fire Services emergency incident calls arranged in a decending order. We can see that most call type of call is `Medical`, followed by `Emergency Fire`. Meanwhile, `Non Emergency` & `CBRN & Hazardous Materials` are less common. This makes sense as a residents of Toronto, we rarely ever hear about Hazardous Materials causing issues, and Non-Emergency calls are a waste of resources. 
+
+## Reflection on the Graph
+
+After reading Vanderplas, Cook, and Hofmann (2020), I think the aesthetics can significantly affect how different graphs are read for same data. The graph in (Figure \@ref(fig:fig1)) has no colour and is a bar graph. 
+With the help of some colour, I could have included additional information such as source of the call to give more insights on this graph. Furthermore, different types of plots could have given different visual information to the readers. 
+
+
+I will be looking at these cognitive principles when making graphs in future:
+
+- Proximity
+- Similarity
+- Common Region
+- Common fate
+- Working Memory
+- Change blindness
+- Ease of Comparisons
+
+Cognitive principles are useful because good graphics take advantage of the human visual system’s ability to process large amounts of visual information with relatively little effort
+
+Further, I will be using colours and will be faceting plots to make better graphs with more information for the readers.
+
+## Map
+
+
+```{r fig2, echo=FALSE, fig.cap='Toronto Fire Services Emergency Incident Calls', fig.width=9, fig.height=6, message=FALSE, warning=FALSE}
+
+ggmap(toronto_stamen_map) +
+  geom_point(data = EventCallType_reduced,
+             aes(x = LONGITUDE,
+                 y = LATITUDE,
+                 colour = Initial.CAD.Event.Call.Type)) +
+  labs(x = "Longitude",
+       y = "Latitude",
+       colour = "Emergency Event Call Type",
+       title = "Toronto Fire Services Emergency Incident Calls") +
+  theme_minimal() 
+
+```
+
+This Map (Figure \@ref(fig:fig2)) was created using ggmap library. In this map (Figure \@ref(fig:fig2)) we can visualize the (Figure \@ref(fig:fig1)) graph in a map. However, over half the incidents had no `longitude` & `latitude` values. Hence, they were not included in this figure. Visually it seems like `Emergency Fire` is the dominant emergency call for the Fire Services. However, based on (Figure \@ref(fig:fig1)) we know that `Emergency Fire` is the second most common call. 
+
+
+## Reflection on the Map
+
+The quote ‘maps only show people who aren’t invisible to the makers’ from Heather Krause is very accurate to the Figure \@ref(fig:fig2). Since we didn't have the `longitudes` & `latitudes` of over half the emergency event's, they weren't included in this map. This made it so that Emergency fire seems like the most common type of emergency event the Fire Services respond to. However, in reality the most common is Medical, which is not included in this map at all. 
+
+Not all objective viewpoints are being considered. Such as this map doesn't showcase how fire services have an impact on priority neighbourhoods. It is also hard to see which neighbourhoods have higher emergency calls for Fire Services. 
+
+
+
+\newpage
+
+
+# References
+
+
